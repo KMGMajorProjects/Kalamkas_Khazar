@@ -228,7 +228,7 @@ function render() {
           <h1>${esc(m.t)}</h1><p>${esc(m.d)}</p>
           <div class="ban-meta"><span class="chip info">слайды ${pad3(m.slides[0])}–${pad3(m.slides[m.slides.length - 1])}</span>${flagged ? `<span class="chip warn">⚠ ${flagged} с оговоркой о сверке</span>` : ''}</div></div>
       </section>
-      <div class="blocks">${m.slides.map(n => block(S(n))).join('')}</div>
+      <div class="blocks">${layout(m.slides).map(x => block(x.s, { wide: x.wide })).join('')}</div>
       <nav class="pager">${prev ? `<a class="pg glass reveal" href="#${prev.id}"><span class="lbl">← ${prev.n}</span><b>${esc(prev.s)}</b></a>` : '<a class="pg glass reveal" href="#start"><span class="lbl">← 00</span><b>Старт</b></a>'}
         ${next ? `<a class="pg nx glass reveal" href="#${next.id}"><span class="lbl">${next.n} →</span><b>${esc(next.s)}</b></a>` : '<span></span>'}</nav>
     </div>`;
@@ -316,11 +316,25 @@ function figHTML(n) {
   return `<figure class="sfig"><img src="${own}" alt="" loading="lazy"><figcaption>${esc(cap)} · иллюстрация</figcaption></figure>`;
 }
 const WIDE = new Set(['table', 'flow', 'compare', 'quote']);
+const natWide = s => !!(s.w || s.n === 44 || WIDE.has(s.type) || (s.type === 'timeline' && s.items.length > 3) || JSON.stringify(s).length > 1100);
+const weight = s => JSON.stringify(s).length + (SIMG[s.n] && HAS.has('s' + pad3(s.n) + '.webp') ? 700 : 0);
+function layout(ns) {   // пары одинарных блоков выравниваем по объёму, одиночки растягиваем на всю ширину
+  const L = ns.map(n => S(n)).filter(s => s && s.type !== 'divider' && s.n !== 159).map(s => ({ s, wide: natWide(s) }));
+  for (let i = 0; i < L.length; i++) {
+    if (L[i].wide) continue;
+    const nx = L[i + 1];
+    if (!nx || nx.wide) { L[i].wide = true; continue; }
+    const a = weight(L[i].s), b = weight(nx.s);
+    if (Math.max(a, b) / Math.min(a, b) > 2.1) { L[i].wide = true; continue; }
+    i++;
+  }
+  return L;
+}
 function block(s, opts = {}) {
   if (!s || s.type === 'divider') return '';
   if (s.n === 159) return '';
   const len = JSON.stringify(s).length;
-  const wide = opts.wide ?? (s.w || s.n === 44 || WIDE.has(s.type) || (s.type === 'timeline' && s.items.length > 3) || len > 1100);
+  const wide = opts.wide ?? natWide(s);
   const cls = { quote: 'glass ice prism', compare: 'glass hi' }[s.type] || (s.w ? 'glass hi tick' : 'glass');
   const title = s.n === 158 ? 'Глоссарий: 30 терминов и сокращений' : s.t;
   let inner = s.w && W[s.w] ? W[s.w](s) : body(s) + notesHTML(s.notes, s.flag);
@@ -396,7 +410,7 @@ W.map = s => `<div class="map" id="mapW"><svg viewBox="0 0 900 500" aria-label="
   <g transform="translate(130 470)"><rect width="200" height="22" rx="7" fill="#fff" opacity=".8"/><text x="10" y="15" style="font:500 10.5px 'IBM Plex Mono',monospace;fill:#3b5170">глубины 6–8 м · схема не в масштабе</text></g>
   </svg><div class="mapcard glass prism" id="mapCard"></div></div>
   <div class="yr" style="margin-top:12px"><button class="btn" data-k="0">Каламкас-море</button><button class="btn" data-k="1">Хазар</button><button class="btn" data-k="2">Ауэзов</button></div>
-  ${notesHTML([s.items[s.items.length - 1]])}`;
+  ${notesHTML(s.notes)}`;
 MOUNT.map = el => {
   const s18 = S(18), s17 = S(17);
   const info = [
@@ -721,7 +735,7 @@ MOUNT.waterfall = (el, s) => {
 
 /* ---- структура: вариант А / Б ---- */
 W.structure = s => `<div class="wtop"><div class="seg" id="stSeg"><button class="on" data-v="A">А · вход через ККО</button><button data-v="B">Б · новое СП 50/50</button></div><div class="presets" id="stSteps"></div></div>
-  <div class="stru" id="stD"></div><div id="stT" style="margin-top:12px"></div>${notesHTML([s.items[s.items.length - 1]], true)}`;
+  <div class="stru" id="stD"></div><div id="stT" style="margin-top:12px"></div>${notesHTML(s.notes, true)}`;
 MOUNT.structure = el => {
   const node = (x, y, w, t, sub, c, cls = '') => `<g class="node fade ${cls}"><rect x="${x - w / 2}" y="${y - 30}" width="${w}" height="60" rx="16" fill="#fff" fill-opacity=".9" stroke="${c}" stroke-width="1.6"/><rect x="${x - w / 2}" y="${y - 30}" width="6" height="60" rx="3" fill="${c}"/><text x="${x}" y="${y - 2}" text-anchor="middle" style="font:600 14px Unbounded,Onest,sans-serif;fill:#0a2547">${t}</text><text x="${x}" y="${y + 17}" text-anchor="middle" style="font:500 10.5px 'IBM Plex Mono',monospace;fill:${c}">${sub}</text></g>`;
   const arr = (x1, y1, x2, y2, lab, cls = '', c = '#0a64a4') => `<g class="fade ${cls}"><path class="ln" d="M${x1} ${y1} C${x1} ${(y1 + y2) / 2} ${x2} ${(y1 + y2) / 2} ${x2} ${y2}" style="stroke:${c}"/>${lab ? `<rect x="${(x1 + x2) / 2 - lab.length * 3.4}" y="${(y1 + y2) / 2 - 12}" width="${lab.length * 6.8}" height="22" rx="6" fill="#fff"/><text x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 + 3}" text-anchor="middle" style="font:500 10.5px 'IBM Plex Mono',monospace;fill:${c}">${lab}</text>` : ''}</g>`;
@@ -877,5 +891,5 @@ function bgFx() {
   };
   requestAnimationFrame(frame);
 }
-function startApp() { bgFx(); shell(); route(); }
+function startApp() { bgFx(); shell(); route(); try { xpInit(); } catch (e) { console.error(e); } }
 gate();
