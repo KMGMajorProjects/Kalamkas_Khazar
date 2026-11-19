@@ -338,7 +338,7 @@ function pageStart() {
   const seen = new Set(store.get(seenKey(), []));
   const desc = {}; (S(4).rows || []).forEach(r => { desc[r[0]] = r[2]; });
   return `<div class="page">
-    <section class="hero reveal in"><div class="ph par"></div>
+    <section class="hero reveal in"><div class="ph"></div>
       <div class="hero-txt">
         <div class="eyebrow">Программа погружения · данные обновлены ${DATA.meta.asof.split('-').reverse().join('.')}</div>
         <h1>Каламкас-море<span>– Хазар</span></h1>
