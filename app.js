@@ -4,6 +4,8 @@
    1 шифрование и учётки · 2 вход · 3 оболочка · 4 движок блоков · 5 виджеты · 6 запуск
    ===================================================================== */
 const CFG = window.CONFIG || null;
+const HAS = new Set((CFG && CFG.assets) || []);
+const banImg = (m, sm) => HAS.has(`ban-${m.id}.webp`) ? `background-image:url(ban-${m.id}${sm && HAS.has(`ban-${m.id}-sm.webp`) ? '-sm' : ''}.webp);background-position:center` : `background-image:url(${m.photo}${sm ? '-sm' : ''}.webp);background-position:${m.pos}`;
 let DATA = null, USER = null, SESSION_EXP = null;
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -129,6 +131,26 @@ async function gate() {
   setTimeout(() => (u.value ? pw : u).focus(), 350);
 }
 
+
+/* ---------- иконки модулей (сквиркулы в стиле iOS) ---------- */
+const ICO = {
+  start: ['#19a2df', '#0a2547', 'M3 11l9-7 9 7v8.5a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H4.5A1.5 1.5 0 0 1 3 19.5z'],
+  m01: ['#3fb6ff', '#0a64a4', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM12 11.2v1.6'],
+  m02: ['#2bc6b4', '#0b6f8a', 'M12 3.5l9 4.8-9 4.8-9-4.8zM3 12.3l9 4.8 9-4.8M3 16.4l9 4.8 9-4.8'],
+  m03: ['#5aa9ff', '#1d3d9a', 'M8 21l4-17 4 17M9.4 15h5.2M10.6 9.5h2.8M3.5 21h17M6 17.5h12'],
+  m04: ['#36c2e0', '#0a64a4', 'M12 6.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 6.5V21M5 13.5a7 7 0 0 0 14 0M8.5 10h7'],
+  m05: ['#8f7bff', '#3b3ab8', 'M4 20l4.2-1 11-11a2.1 2.1 0 0 0-3-3l-11 11zM14.5 6.5l3 3M4 20h7'],
+  m06: ['#ffb340', '#e0712b', 'M6 21V4.5M6 4.5h13M6 4.5l12 6M17.5 4.5v6M17.5 10.5v3.5M15.5 14h4M3 21h7'],
+  m07: ['#34d399', '#0f957a', 'M4 20V11M9.5 20V5M15 20v-6.5M20.5 20V8.5M3 20.5h18'],
+  m08: ['#ff6b81', '#c81e45', 'M12 3l8 3v6c0 5-3.5 8.2-8 9-4.5-.8-8-4-8-9V6zM12 8.2v4.6M12 15.8v.4'],
+  m09: ['#2dd4bf', '#0d6e7a', 'M10 13.5a4 4 0 0 0 6 .4l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2M14 10.5a4 4 0 0 0-6-.4l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2'],
+  m10: ['#7aa2c8', '#0a2547', 'M3 9.5L12 4l9 5.5M5.5 9.5v8.5M10 9.5v8.5M14 9.5v8.5M18.5 9.5v8.5M3 20.5h18'],
+  m11: ['#ff8a5c', '#d6383a', 'M4.5 6h15A1.5 1.5 0 0 1 21 7.5v12a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-12A1.5 1.5 0 0 1 4.5 6zM3 10.5h18M8 3.5v4.5M16 3.5v4.5M7.5 15h3'],
+  m12: ['#60a5fa', '#2563eb', 'M10 6.5h10M10 12h10M10 17.5h10M3.8 6.5l1.4 1.4 2.4-2.6M3.8 12l1.4 1.4 2.4-2.6M3.8 17.5l1.4 1.4 2.4-2.6'],
+  mA: ['#a3b3c8', '#3b5170', 'M3 7.5A2 2 0 0 1 5 5.5h4.2l2 2.2H19a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],
+};
+const sq = (id, cls = '') => { const [a, b, d] = ICO[id] || ICO.start; return `<span class="sq ${cls}" style="--g1:${a};--g2:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg></span>`; };
+
 /* =====================================================================
    3. ОБОЛОЧКА
    ===================================================================== */
@@ -146,15 +168,15 @@ function shell() {
   $('#amN').textContent = USER.n || '—'; $('#amL').textContent = USER.l || '—'; $('#amE').textContent = USER.e || '—'; $('#amR').textContent = USER.r || '—';
   $('#amS').textContent = SESSION_EXP ? new Date(SESSION_EXP).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'до закрытия вкладки';
   const m = DATA.meta, asof = m.asof ? m.asof.split('-').reverse().join('.') : '—';
-  $('#railAsof').textContent = 'срез ' + asof;
-  $('#ftL').textContent = `Программа погружения ДКНП · актуализация ${asof} · ${m.count} слайдов · сборка ${CFG ? CFG.build : 'local'}`;
+  $('#railAsof').textContent = 'данные обновлены ' + asof;
+  $('#ftL').textContent = `Программа погружения ДКНП · данные обновлены ${asof} · ${m.count} слайдов · сборка ${CFG ? CFG.build : 'local'}`;
   const acct = $('#acct'), ab = $('#acctBtn');
   ab.addEventListener('click', e => { e.stopPropagation(); const o = acct.classList.toggle('open'); ab.setAttribute('aria-expanded', o); });
   document.addEventListener('click', e => { if (!acct.contains(e.target)) { acct.classList.remove('open'); ab.setAttribute('aria-expanded', 'false'); } });
   $('#logout').addEventListener('click', logout);
   // навигация
-  $('#nav').innerHTML = `<a href="#start" data-p="start"><span class="no">00</span>Старт<span class="seen"></span></a><div class="rail-sep">Модули</div>` +
-    DATA.modules.map(x => `${x.id === 'mA' ? '<div class="rail-sep">Приложение</div>' : ''}<a href="#${x.id}" data-p="${x.id}"><span class="no">${x.n}</span>${esc(x.s)}<span class="seen"></span></a>`).join('');
+  $('#nav').innerHTML = `<a href="#start" data-p="start">${sq('start')}Старт<span class="seen"></span></a><div class="rail-sep">Модули</div>` +
+    DATA.modules.map(x => `${x.id === 'mA' ? '<div class="rail-sep">Приложение</div>' : ''}<a href="#${x.id}" data-p="${x.id}">${sq(x.id)}${esc(x.s)}<span class="seen"></span></a>`).join('');
   $('#menuBtn').addEventListener('click', () => document.body.classList.toggle('nav'));
   $('#scrim').addEventListener('click', () => document.body.classList.remove('nav'));
   $('#nav').addEventListener('click', () => document.body.classList.remove('nav'));
@@ -166,7 +188,7 @@ function shell() {
   ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
   setInterval(() => { if (Date.now() - lastAct > IDLE_MIN * 60e3 || (SESSION_EXP && Date.now() > SESSION_EXP)) logout(); }, 30e3);
   // параллакс фото
-  let pr = 0; addEventListener('scroll', () => { if (pr || RM) return; pr = requestAnimationFrame(() => { pr = 0; const y = scrollY; $$('.par').forEach(el => { const r = el.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return; el.style.transform = `translateY(${(r.top * -.12).toFixed(1)}px) scale(1.08)`; }); }); }, { passive: true });
+  let pr = 0; addEventListener('scroll', () => { if (pr || RM) return; pr = requestAnimationFrame(() => { pr = 0; const y = scrollY; $$('.par').forEach(el => { const r = el.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return; el.style.translate = `0 ${(r.top * -.1).toFixed(1)}px`; }); }); }, { passive: true });
 }
 function markSeen(id) {
   const seen = new Set(store.get(seenKey(), [])); seen.add(id); store.set(seenKey(), [...seen]);
@@ -192,17 +214,17 @@ function render() {
   CLEAN.forEach(f => f()); CLEAN = [];
   const main = $('#main'), mods = DATA.modules;
   if (ROUTE.page === 'start') {
-    $('#crumb').innerHTML = '<span class="no">00</span><b>Старт · проект в 60 секундах</b>';
+    $('#crumb').innerHTML = sq('start') + '<b>Старт · проект в 60 секундах</b>';
     main.innerHTML = pageStart();
   } else {
     const i = mods.findIndex(m => m.id === ROUTE.page), m = mods[i];
-    $('#crumb').innerHTML = `<span class="no">${m.n}</span><b>${esc(m.s)}</b>`;
+    $('#crumb').innerHTML = `${sq(m.id)}<b>${m.n} · ${esc(m.s)}</b>`;
     const flagged = m.slides.filter(n => S(n).flag).length;
     const prev = i > 0 ? mods[i - 1] : null, next = mods[i + 1];
     main.innerHTML = `<div class="page">
-      <section class="banner reveal"><div class="ph par" style="background-image:url(img/${m.photo}.webp);background-position:${m.pos}"></div>
+      <section class="banner reveal"><div class="ph par" style="${banImg(m)}"></div>
         <div class="ban-num">${m.n}</div>
-        <div class="ban-card glass prism"><div class="eyebrow">${m.id === 'mA' ? 'Приложение' : 'Модуль ' + m.n}<span class="chip">${m.slides.length} слайдов</span></div>
+        <div class="ban-card glass prism"><div class="eyebrow">${sq(m.id)}${m.id === 'mA' ? 'Приложение' : 'Модуль ' + m.n}<span class="chip">${m.slides.length} слайдов</span></div>
           <h1>${esc(m.t)}</h1><p>${esc(m.d)}</p>
           <div class="ban-meta"><span class="chip info">слайды ${pad3(m.slides[0])}–${pad3(m.slides[m.slides.length - 1])}</span>${flagged ? `<span class="chip warn">⚠ ${flagged} с оговоркой о сверке</span>` : ''}</div></div>
       </section>
@@ -283,15 +305,27 @@ function flowHTML(steps, nowIdx = -1) {
   const arr = '<span class="fa"><svg width="26" height="12" viewBox="0 0 26 12"><path class="dash" d="M1 6h20" stroke="currentColor" stroke-width="2" fill="none"/><path d="M18 1l6 5-6 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>';
   return `<div class="flow">${steps.map((st, i) => `${i ? arr : ''}<div class="fs${i === nowIdx ? ' now' : ''}" style="--i:${i}"><span class="k">${esc(st.k)}</span><b>${esc(st.t)}</b></div>`).join('')}</div>`;
 }
+
+/* ---------- фото в блоках: свой файl sNNN.webp (если положить в корень), иначе фото из набора ---------- */
+const SIMG = { 22: 'Мелководный ледовый Каспий', 29: 'Ледостойкая морская платформа', 34: 'Береговой комплекс CPF', 47: 'Обследование коридора UXO',
+  53: 'Морские инженерные изыскания', 75: 'Изготовление на казахстанской верфи', 77: 'Буксировка модуля по каналу', 78: 'Long-lead оборудование' };
+
+function figHTML(n) {
+  const cap = SIMG[n], own = 's' + pad3(n) + '.webp';
+  if (!cap || !HAS.has(own)) return '';
+  return `<figure class="sfig"><img src="${own}" alt="" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>`;
+}
 const WIDE = new Set(['table', 'flow', 'compare', 'quote']);
 function block(s, opts = {}) {
   if (!s || s.type === 'divider') return '';
   if (s.n === 159) return '';
   const len = JSON.stringify(s).length;
-  const wide = opts.wide ?? (s.w || WIDE.has(s.type) || (s.type === 'timeline' && s.items.length > 3) || len > 1100);
+  const wide = opts.wide ?? (s.w || s.n === 44 || WIDE.has(s.type) || (s.type === 'timeline' && s.items.length > 3) || len > 1100);
   const cls = { quote: 'glass ice prism', compare: 'glass hi' }[s.type] || (s.w ? 'glass hi tick' : 'glass');
   const title = s.n === 158 ? 'Глоссарий: 30 терминов и сокращений' : s.t;
-  const inner = s.w && W[s.w] ? W[s.w](s) : body(s) + notesHTML(s.notes, s.flag);
+  let inner = s.w && W[s.w] ? W[s.w](s) : body(s) + notesHTML(s.notes, s.flag);
+  if (s.n === 44) inner = `<div class="duo"><div>${body(s)}</div>${dredgeSVG()}</div>${notesHTML(s.notes, s.flag)}`;
+  else inner = figHTML(s.n) + inner;
   return `<section class="blk ${cls} spot reveal${wide ? ' w2' : ''}" id="s${s.n}" ${s.w && MOUNT[s.w] ? `data-w="${s.w}" data-n="${s.n}"` : ''}>
     <div class="b-h"><span class="sl">СЛ ${pad3(s.n)}</span><h3>${esc(title)}</h3>${s.flag ? '<span class="chip warn flag" title="В тексте слайда есть оговорка: цифры/даты требуют сверки с первичным документом">⚠ сверка</span>' : ''}</div>
     ${inner}</section>`;
@@ -306,7 +340,7 @@ function pageStart() {
   return `<div class="page">
     <section class="hero reveal in"><div class="ph par"></div>
       <div class="hero-txt">
-        <div class="eyebrow">Программа погружения · актуализация ${DATA.meta.asof.split('-').reverse().join('.')}</div>
+        <div class="eyebrow">Программа погружения · данные обновлены ${DATA.meta.asof.split('-').reverse().join('.')}</div>
         <h1>Каламкас-море<span>– Хазар</span></h1>
         <p>${esc(s6.notes[0])} ${esc(s6.notes[1])}</p>
         <div class="hero-status"><span class="chip glassy" style="color:var(--brand)"><span class="pulse"></span>${esc(s2.items[3][0])} · ${esc(s2.items[3][1])}</span><span class="chip glassy">3 участка недр</span><span class="chip glassy">12 модулей · ${DATA.meta.count} слайдов</span></div>
@@ -325,7 +359,7 @@ function pageStart() {
       ${block(S(139))}
       ${block(S(140))}
       <section class="blk glass w2 reveal"><div class="b-h"><span class="sl">СЛ 004</span><h3>12 модулей + приложение</h3><span class="chip">изучено ${[...seen].filter(x => x !== 'start').length}</span></div>
-        <div class="mods">${mods.map((m, i) => `<a class="mod reveal" style="--d:${i * 40}ms" href="#${m.id}"><div class="ph" style="background-image:url(img/${m.photo}-sm.webp);background-position:${m.pos}"></div>${seen.has(m.id) ? '<span class="chip good v">✓ изучено</span>' : ''}<div class="mod-c glass"><span class="no">${m.id === 'mA' ? 'ПРИЛОЖЕНИЕ' : 'МОДУЛЬ ' + m.n}</span><b>${esc(m.s)}</b><span>${esc(desc[m.n] || m.d.slice(0, 90))}</span></div></a>`).join('')}</div></section>
+        <div class="mods">${mods.map((m, i) => `<a class="mod reveal" style="--d:${i * 40}ms;--k:${i}" href="#${m.id}"><div class="ph" style="${banImg(m, 1)}"></div>${sq(m.id, 'mico')}${seen.has(m.id) ? '<span class="chip good v">✓ изучено</span>' : ''}<div class="mod-c glass"><span class="no">${m.id === 'mA' ? 'ПРИЛОЖЕНИЕ' : 'МОДУЛЬ ' + m.n}</span><b>${esc(m.s)}</b><span class="clamp">${esc(desc[m.n] || m.d)}</span></div></a>`).join('')}</div></section>
       ${block(S(168))}
       ${block(S(3))}
       ${block(S(2), { wide: true })}
@@ -529,6 +563,27 @@ MOUNT.canal = el => {
   draw();
 };
 
+
+/* ---- анимированная схема земснаряда (СЛ 044) ---- */
+function dredgeSVG() {
+  return `<div><div class="dredge"><svg viewBox="0 0 600 300" aria-label="Схема дноуглубления">
+  <defs><linearGradient id="dw" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5cc3ef" stop-opacity=".55"/><stop offset="1" stop-color="#0a64a4" stop-opacity=".35"/></linearGradient>
+  <pattern id="ds" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="9" stroke="#b89b64" stroke-opacity=".45" stroke-width="2.5"/></pattern>
+  <clipPath id="dcut"><rect x="0" y="0" height="300" width="0"><animate attributeName="width" values="40;600;600" keyTimes="0;.85;1" dur="12s" repeatCount="indefinite"/></rect></clipPath></defs>
+  <rect x="0" y="92" width="600" height="208" fill="url(#dw)"/>
+  ${[0, 1, 2].map(k => `<path d="M0 ${92 + k * 6} Q 75 ${88 + k * 6} 150 ${92 + k * 6} T 300 ${92 + k * 6} T 450 ${92 + k * 6} T 600 ${92 + k * 6}" fill="none" stroke="#fff" stroke-opacity="${.8 - k * .25}" stroke-width="1.5"><animateTransform attributeName="transform" type="translate" values="0 0;-40 0;0 0" dur="${5 + k}s" repeatCount="indefinite"/></path>`).join('')}
+  <path d="M0 170 C120 165 220 175 300 168 S480 172 600 166 L600 300 L0 300 Z" fill="#efe4cc"/><path d="M0 170 C120 165 220 175 300 168 S480 172 600 166 L600 300 L0 300 Z" fill="url(#ds)" stroke="#b89b64" stroke-width="1.5"/>
+  <g clip-path="url(#dcut)"><path d="M0 172 L0 222 L600 222 L600 168 Z" fill="url(#dw)"/><line x1="0" x2="600" y1="222" y2="222" stroke="#0a64a4" stroke-dasharray="6 5" stroke-width="1.5"/></g>
+  <g><animateTransform attributeName="transform" type="translate" values="0 0;520 0;520 0" keyTimes="0;.85;1" dur="12s" repeatCount="indefinite"/>
+    <path d="M10 92 L20 76 L110 76 L100 92 Z" fill="#0a2547"/><rect x="36" y="58" width="40" height="18" rx="3" fill="#fff" stroke="#0a2547" stroke-width="2"/><rect x="42" y="63" width="8" height="6" fill="#19a2df"/><rect x="56" y="63" width="8" height="6" fill="#19a2df"/>
+    <rect x="80" y="44" width="5" height="32" fill="#e0284a"/><path d="M28 90 L54 214" stroke="#0a2547" stroke-width="5" stroke-linecap="round"/><circle cx="54" cy="216" r="9" fill="#c08300" stroke="#0a2547" stroke-width="2"><animateTransform attributeName="transform" type="rotate" values="0 54 216;360 54 216" dur="1s" repeatCount="indefinite"/></circle>
+    <path d="M110 80 C150 70 170 74 200 82" fill="none" stroke="#7689a3" stroke-width="4" stroke-dasharray="2 5"><animate attributeName="stroke-dashoffset" values="0;-14" dur=".6s" repeatCount="indefinite"/></path>
+    ${[0, 1, 2, 3, 4].map(k => `<circle r="${2 + k % 2}" fill="#b89b64"><animateMotion dur="1.6s" begin="${k * .32}s" repeatCount="indefinite" path="M54 214 L28 92"/></circle>`).join('')}</g>
+  <g transform="translate(14 254)"><rect width="300" height="34" rx="10" fill="#fff" fill-opacity=".85"/><text x="12" y="21" style="font:500 11px 'IBM Plex Mono',monospace;fill:#0a2547">земснаряд · 75 км × 120 м × −4,8 м · 17,4 млн м³</text></g>
+  <text x="586" y="238" text-anchor="end" style="font:500 10px 'IBM Plex Mono',monospace;fill:#0a64a4">проектное дно канала</text>
+  </svg></div><p style="margin:8px 0 0;font-size:11.5px;color:var(--muted)">Анимированная схема, не технология работ. </p></div>`;
+}
+
 /* ---- UXO: эволюция перечня ---- */
 const pairBar = (l, a, b, u, d = 0) => { const mx = Math.max(a, b); return `<div style="display:grid;gap:6px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.6);border:1px solid var(--glass-b)">
   <div class="ctl-h"><span>${l}</span><span class="chip good">−${fmt(a - b, d)} ${u} · −${fmt((a - b) / a * 100, 0)}%</span></div>
@@ -696,19 +751,27 @@ MOUNT.structure = el => {
 W.roadmap = s => `<div class="chart" id="rmC" style="overflow-x:auto"><div class="tip"></div></div>${body(s)}${notesHTML(s.notes, true)}`;
 MOUNT.roadmap = el => {
   const asof = DATA.meta.asof.split('-').map(Number), now = asof[0] + (asof[1] - 1 + asof[2] / 30) / 12;
-  const EV = [[2023.16, 'УМК-контракт', '27.02.2023 · №5181-УВС-СП', '#0a64a4', 1], [2024.78, 'Контракт FEED', '10.10.2024 · FES/КМГИ', '#0a64a4', -1], [2025.81, 'Санкции OFAC', '22.10.2025 · ЛУКОЙЛ в SDN', '#e0284a', 1], [2025.9, 'ПДПР · КТЭО', '28.11 · 23.12.2025', '#19a2df', -2],
-    [2026.57, 'CNOOC — партнёр', '28.07.2026', '#0f957a', 2], [2027.62, 'Целевой FID', 'III кв. 2027 · условно', '#c08300', -1], [2031.88, 'CFO', 'IV кв. 2031 · подлежит ревизии', '#e0284a', 1]];
-  const Wd = 900, H = 300, l = 30, r = 30, X = y => l + (y - 2023) / 9.2 * (Wd - l - r), Y0 = 150, LY = { 1: 8, 2: 58, '-1': 196, '-2': 246 };
-  let ax = ''; for (let y = 2023; y <= 2032; y++) ax += `<line x1="${X(y)}" x2="${X(y)}" y1="${Y0 - 6}" y2="${Y0 + 6}" stroke="#7689a3"/><text class="ax" x="${X(y) + 3}" y="${Y0 + 22}">${y}</text>`;
-  const ev = EV.map(([y, t, d, c, lv], i) => { const yy = LY[lv], bx = clamp(X(y), l + 72, Wd - r - 72); return `<g style="animation:rise .5s var(--ease) ${i * 110}ms backwards"><path d="M${X(y)} ${Y0} L${X(y)} ${lv > 0 ? yy + 46 : yy - 10} L${bx} ${lv > 0 ? yy + 40 : yy - 4}" fill="none" stroke="${c}" stroke-opacity=".45"/><circle cx="${X(y)}" cy="${Y0}" r="7" fill="#fff" stroke="${c}" stroke-width="3"/>
-    <rect x="${bx - 70}" y="${yy - 4}" width="140" height="40" rx="9" fill="#fff" fill-opacity=".94" stroke="${c}" stroke-opacity=".35"/><text x="${bx}" y="${yy + 13}" text-anchor="middle" style="font:600 11.5px Onest,sans-serif;fill:#0a2547">${t}</text><text x="${bx}" y="${yy + 28}" text-anchor="middle" style="font:500 9.5px 'IBM Plex Mono',monospace;fill:${c}">${d}</text></g>`; }).join('');
-  $('#rmC', el).insertAdjacentHTML('beforeend', `<svg viewBox="0 0 ${Wd} ${H}" style="min-width:760px"><defs><linearGradient id="rmG" x1="0" x2="1"><stop offset="0" stop-color="#0a64a4"/><stop offset=".45" stop-color="#e0284a"/><stop offset="1" stop-color="#19a2df" stop-opacity=".35"/></linearGradient></defs>
-    <rect x="${X(2025.81)}" y="${Y0 - 12}" width="${X(now) - X(2025.81)}" height="24" fill="#e0284a" opacity=".07"/><text x="${X(2025.81) + 4}" y="${Y0 + 38}" style="font:500 9.5px 'IBM Plex Mono',monospace;fill:#e0284a">пауза · санкции</text>
+  const EV = [[2023.16, 'УМК-контракт', '27.02.2023', '#0a64a4', 1], [2024.78, 'Контракт FEED', '10.10.2024 · FES/КМГИ', '#0a64a4', -1], [2025.81, 'Санкции OFAC', '22.10.2025', '#e0284a', 1], [2025.93, 'ПДПР · КТЭО', '28.11 / 23.12.2025', '#19a2df', -2],
+    [2026.57, 'CNOOC — партнёр', '28.07.2026', '#0f957a', 2], [2027.62, 'Целевой FID', 'III кв. 2027 · условно', '#c08300', -1], [2031.88, 'Первая нефть', 'IV кв. 2031 · ревизия', '#e0284a', 1]];
+  const Wd = 960, H = 320, l = 24, r = 24, inner = Wd - l - r;
+  const X = y => y <= 2028 ? l + (y - 2023) / 5 * inner * .74 : l + inner * .74 + (y - 2028) / 4 * inner * .26;
+  const Y0 = 160, LY = { 1: 14, 2: 74, '-1': 206, '-2': 262 };
+  let ax = ''; for (let y = 2023; y <= 2032; y++) ax += `<line x1="${X(y)}" x2="${X(y)}" y1="${Y0 - 6}" y2="${Y0 + 6}" stroke="#7689a3"/><text class="ax" x="${X(y)}" y="${Y0 + 24}" text-anchor="middle">${y}</text>`;
+  const ev = EV.map(([y, t, d, c, lv], i) => {
+    const w = Math.max(t.length * 7.6, d.length * 6.4) + 26, yy = LY[lv], bx = clamp(X(y), l + w / 2, Wd - r - w / 2), up = lv > 0;
+    return `<g style="animation:rise .5s var(--ease) ${i * 110}ms backwards"><path d="M${X(y)} ${Y0 + (up ? -7 : 7)} L${X(y)} ${up ? yy + 50 : yy - 10} L${bx} ${up ? yy + 44 : yy - 4}" fill="none" stroke="${c}" stroke-opacity=".45"/>
+    <rect x="${bx - w / 2}" y="${yy}" width="${w}" height="44" rx="11" fill="#fff" fill-opacity=".95" stroke="${c}" stroke-opacity=".4"/>
+    <text x="${bx}" y="${yy + 19}" text-anchor="middle" style="font:700 12px Montserrat,Onest,sans-serif;fill:#0a2547">${t}</text><text x="${bx}" y="${yy + 34}" text-anchor="middle" style="font:500 10px 'IBM Plex Mono',monospace;fill:${c}">${d}</text>
+    <circle cx="${X(y)}" cy="${Y0}" r="6" fill="#fff" stroke="${c}" stroke-width="3"/></g>`; }).join('');
+  $('#rmC', el).insertAdjacentHTML('beforeend', `<svg viewBox="0 0 ${Wd} ${H}" style="min-width:720px"><defs><linearGradient id="rmG" x1="0" x2="1"><stop offset="0" stop-color="#0a64a4"/><stop offset=".5" stop-color="#e0284a"/><stop offset="1" stop-color="#19a2df" stop-opacity=".35"/></linearGradient></defs>
+    <rect x="${X(2025.81)}" y="${Y0 - 11}" width="${X(now) - X(2025.81)}" height="22" rx="4" fill="#e0284a" opacity=".08"/>
     <line x1="${l}" x2="${Wd - r}" y1="${Y0}" y2="${Y0}" stroke="url(#rmG)" stroke-width="4" stroke-linecap="round"/>
     <line x1="${X(now)}" x2="${Wd - r}" y1="${Y0}" y2="${Y0}" stroke="#fff" stroke-width="2" stroke-dasharray="4 6"/>${ax}
-    <g opacity=".55"><text x="${X(2029)}" y="${Y0 + 44}" text-anchor="middle" style="font:500 10.5px Onest,sans-serif;fill:#7689a3;text-decoration:line-through">первая нефть 2028 — устарело</text></g>
+    <text x="${(X(2025.81) + X(now)) / 2}" y="${Y0 + 40}" text-anchor="middle" style="font:500 9.5px 'IBM Plex Mono',monospace;fill:#e0284a">пауза · санкции</text>
+    <text x="${X(2029.6)}" y="${Y0 - 18}" text-anchor="middle" style="font:500 10.5px Onest,sans-serif;fill:#9aa8ba;text-decoration:line-through">первая нефть 2028 — устарело</text>
     ${ev}
-    <g transform="translate(${X(now)},${Y0})"><circle r="9" fill="#e0284a"/><circle r="9" fill="none" stroke="#e0284a"><animate attributeName="r" from="9" to="26" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" from=".8" to="0" dur="1.8s" repeatCount="indefinite"/></circle><text y="-16" x="14" style="font:600 10px 'IBM Plex Mono',monospace;fill:#e0284a">СЕЙЧАС</text></g></svg>`);
+    <g transform="translate(${X(now)},${Y0})"><circle r="8" fill="#e0284a"/><circle r="8" fill="none" stroke="#e0284a"><animate attributeName="r" from="8" to="24" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" from=".8" to="0" dur="1.8s" repeatCount="indefinite"/></circle>
+      <rect x="10" y="-34" width="64" height="18" rx="5" fill="#e0284a"/><text x="42" y="-21" text-anchor="middle" style="font:600 9.5px 'IBM Plex Mono',monospace;fill:#fff">СЕЙЧАС</text></g></svg>`);
 };
 
 /* ---- правильно / неправильно ---- */
@@ -792,5 +855,27 @@ function initSearch() {
 /* =====================================================================
    6. ЗАПУСК
    ===================================================================== */
-function startApp() { shell(); route(); }
+
+/* ---------- живой фон: «поток данных» ---------- */
+function bgFx() {
+  if (RM) return;
+  const cv = document.createElement('canvas'); cv.id = 'bgFx'; document.body.prepend(cv);
+  const ctx = cv.getContext('2d'); let W, H, P = [], last = 0;
+  const init = () => { const d = Math.min(1.5, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.round(Math.min(70, W * H / 26000)); P = Array.from({ length: n }, () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25, r: Math.random() * 1.6 + .6, c: Math.random() < .18 ? '224,40,74' : '10,100,164' })); };
+  init(); addEventListener('resize', init);
+  const frame = t => {
+    requestAnimationFrame(frame);
+    if (document.hidden || t - last < 33) return; last = t;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of P) { p.x += p.vx; p.y += p.vy; if (p.x < -10) p.x = W + 10; if (p.x > W + 10) p.x = -10; if (p.y < -10) p.y = H + 10; if (p.y > H + 10) p.y = -10; }
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) { const a = P[i], b = P[j], dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy; if (d2 < 15000) { ctx.strokeStyle = `rgba(10,100,164,${(.09 * (1 - d2 / 15000)).toFixed(3)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } }
+    for (const p of P) { ctx.fillStyle = `rgba(${p.c},.32)`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill(); }
+    // медленная «сканирующая» волна по экрану
+    const sy = (t / 40) % (H + 300) - 150, g = ctx.createLinearGradient(0, sy - 120, 0, sy);
+    g.addColorStop(0, 'rgba(25,162,223,0)'); g.addColorStop(1, 'rgba(25,162,223,.05)'); ctx.fillStyle = g; ctx.fillRect(0, sy - 120, W, 120);
+  };
+  requestAnimationFrame(frame);
+}
+function startApp() { bgFx(); shell(); route(); }
 gate();
