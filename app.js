@@ -223,7 +223,7 @@ function render() {
     const prev = i > 0 ? mods[i - 1] : null, next = mods[i + 1];
     main.innerHTML = `<div class="page">
       <section class="banner reveal"><div class="ph par" style="${banImg(m)}"></div>
-        <div class="ban-num">${m.n}</div>
+        <div class="ban-num">${m.n}</div><span class="ill">фото — иллюстрация</span>
         <div class="ban-card glass prism"><div class="eyebrow">${sq(m.id)}${m.id === 'mA' ? 'Приложение' : 'Модуль ' + m.n}<span class="chip">${m.slides.length} слайдов</span></div>
           <h1>${esc(m.t)}</h1><p>${esc(m.d)}</p>
           <div class="ban-meta"><span class="chip info">слайды ${pad3(m.slides[0])}–${pad3(m.slides[m.slides.length - 1])}</span>${flagged ? `<span class="chip warn">⚠ ${flagged} с оговоркой о сверке</span>` : ''}</div></div>
@@ -313,7 +313,7 @@ const SIMG = { 22: 'Мелководный ледовый Каспий', 29: 'Л
 function figHTML(n) {
   const cap = SIMG[n], own = 's' + pad3(n) + '.webp';
   if (!cap || !HAS.has(own)) return '';
-  return `<figure class="sfig"><img src="${own}" alt="" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>`;
+  return `<figure class="sfig"><img src="${own}" alt="" loading="lazy"><figcaption>${esc(cap)} · иллюстрация</figcaption></figure>`;
 }
 const WIDE = new Set(['table', 'flow', 'compare', 'quote']);
 function block(s, opts = {}) {

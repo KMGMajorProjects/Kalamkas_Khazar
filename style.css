@@ -587,3 +587,46 @@ td{overflow-wrap:anywhere}
 .ban-card{max-width:min(620px,calc(100% - 44px))}
 .ban-card h1{overflow-wrap:anywhere;hyphens:auto}
 .mod-c span.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ===== v4: вход — два логотипа, фото без растяжения, прокрутка ===== */
+.gate{overflow-y:auto;overscroll-behavior:contain}
+.gate-photo,#gateBg{position:fixed}
+.gate-photo{animation:none;transform:none;background-position:78% 50%;image-rendering:auto}
+.gate-logos{display:flex;align-items:center;gap:22px;margin-bottom:28px}
+.gate-logos .gate-logo{margin:0;height:70px}
+.gate-logos .gate-logo.kmg{height:52px}
+.lg-div{width:1px;height:48px;background:linear-gradient(transparent,rgba(8,36,74,.25),transparent)}
+@media (max-width:920px){.gate-logos{gap:14px;margin-bottom:16px}.gate-logos .gate-logo{height:48px}.gate-logos .gate-logo.kmg{height:30px}.lg-div{height:34px}}
+@media (max-width:380px){.gate-logos .gate-logo.kmg{height:24px}}
+/* подпись «иллюстрация» на сгенерированных фото */
+.ill{position:absolute;right:14px;bottom:12px;z-index:2;font:500 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.85);text-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+/* ===== v5: крупный сбалансированный экран входа (масштаб от ширины и высоты окна) ===== */
+@media (min-width:921px){
+  .gate{--u:min(1vw,1.75vh)}
+  .gate-shell{width:min(1640px,94vw);grid-template-columns:minmax(0,1.2fr) minmax(0,clamp(420px,calc(var(--u)*34),600px));gap:clamp(40px,calc(var(--u)*7),130px);padding:clamp(24px,4vh,56px) clamp(24px,3vw,56px)}
+  .gate-logos{gap:clamp(18px,calc(var(--u)*2),34px);margin-bottom:clamp(18px,4vh,44px)}
+  .gate-logos .gate-logo{height:clamp(58px,calc(var(--u)*7.4),118px)}
+  .gate-logos .gate-logo.kmg{height:clamp(40px,calc(var(--u)*5),78px)}
+  .lg-div{height:clamp(46px,calc(var(--u)*5.6),88px)}
+  .gate-brand .eyebrow{font-size:clamp(11px,calc(var(--u)*.95),15px)}
+  .gate-brand h1{font-size:clamp(42px,calc(var(--u)*6.2),112px);margin:clamp(10px,1.6vh,22px) 0 clamp(12px,2vh,26px)}
+  .gate-brand p{font-size:clamp(16px,calc(var(--u)*1.35),23px);max-width:44ch}
+  .gate-facts{margin-top:clamp(16px,3vh,36px);gap:10px;max-width:none}
+  .gate-facts .chip{font-size:clamp(11.5px,calc(var(--u)*.95),15px);padding:clamp(7px,1vh,11px) clamp(11px,1vw,16px);border-radius:10px}
+  .gate-card{padding:clamp(24px,4vh,46px) clamp(26px,2.6vw,46px) clamp(18px,3vh,34px);border-radius:clamp(22px,2vw,32px)}
+  .gc-head{margin-bottom:clamp(12px,2.4vh,28px)}
+  .gc-head h2{font-size:clamp(24px,calc(var(--u)*2.4),40px)}
+  .gc-sub{font-size:clamp(13.5px,calc(var(--u)*1.1),18px)}
+  .lock-badge{width:clamp(46px,calc(var(--u)*4.4),64px);height:clamp(46px,calc(var(--u)*4.4),64px);border-radius:clamp(14px,1.2vw,20px)}
+  .fld{margin-top:clamp(10px,1.8vh,20px)}
+  .fld>span.lbl{font-size:clamp(10.5px,calc(var(--u)*.9),13px)}
+  .inp{height:clamp(50px,calc(var(--u)*4.6),68px);border-radius:clamp(13px,1vw,17px)}
+  .inp input{font-size:clamp(15.5px,calc(var(--u)*1.2),19px)}
+  .eye{height:clamp(36px,calc(var(--u)*3.4),48px);font-size:clamp(10.5px,calc(var(--u)*.85),12.5px)}
+  .gate-row{margin:clamp(12px,2vh,24px) 0 clamp(14px,2.4vh,28px)}
+  .chk{font-size:clamp(13.5px,calc(var(--u)*1.05),17px)}
+  .btn-primary{height:clamp(52px,calc(var(--u)*4.9),72px);font-size:clamp(15px,calc(var(--u)*1.3),20px);border-radius:clamp(14px,1.1vw,18px)}
+  .gate-foot{font-size:clamp(12px,calc(var(--u)*.9),14px)}
+  .gate-bar{font-size:clamp(11px,calc(var(--u)*.85),13px);padding-block:clamp(10px,1.6vh,16px)}
+}
