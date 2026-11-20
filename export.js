@@ -12,7 +12,7 @@ const XP_PRESETS = {
   'Ранние работы': [41, 42, 43, 44, 46, 47, 49, 50, 52, 55, 57],
 };
 const libs = {};
-const loadLib = (src, test) => libs[src] ||= new Promise((res, rej) => { if (test()) return res(); const s = document.createElement('script'); s.src = src; s.onload = () => test() ? res() : rej(new Error('lib')); s.onerror = () => rej(new Error('lib ' + src)); document.head.appendChild(s); });
+const loadLib = (src, test) => libs[src] ||= new Promise((res, rej) => { if (test()) return res(); const s = document.createElement('script'); s.src = src + VQ; s.onload = () => test() ? res() : rej(new Error('lib')); s.onerror = () => rej(new Error('lib ' + src)); document.head.appendChild(s); });
 
 /* ---------- 1. общая структура контента ---------- */
 function xpBlocks(s, brief) {

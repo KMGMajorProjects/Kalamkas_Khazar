@@ -5,7 +5,8 @@
    ===================================================================== */
 const CFG = window.CONFIG || null;
 const HAS = new Set((CFG && CFG.assets) || []);
-const banImg = (m, sm) => HAS.has(`ban-${m.id}.webp`) ? `background-image:url(ban-${m.id}${sm && HAS.has(`ban-${m.id}-sm.webp`) ? '-sm' : ''}.webp);background-position:center` : `background-image:url(${m.photo}${sm ? '-sm' : ''}.webp);background-position:${m.pos}`;
+const VQ = CFG ? '?v=' + CFG.build : '';
+const banImg = (m, sm) => HAS.has(`ban-${m.id}.webp`) ? `background-image:url(ban-${m.id}${sm && HAS.has(`ban-${m.id}-sm.webp`) ? '-sm' : ''}.webp${VQ});background-position:center` : `background-image:url(${m.photo}${sm ? '-sm' : ''}.webp${VQ});background-position:${m.pos}`;
 let DATA = null, USER = null, SESSION_EXP = null;
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -28,8 +29,8 @@ const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const norm = s => String(s || '').trim().toLowerCase();
 async function sha256hex(s) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', te.encode(s))); return [...h].map(b => b.toString(16).padStart(2, '0')).join(''); }
 let VAULT = null, BLOB = null;
-async function getVault() { if (VAULT) return VAULT; const r = await fetch(CFG.vault, { cache: 'no-store' }); if (!r.ok) throw new Error('nofile'); return (VAULT = await r.json()); }
-async function getBlob() { if (BLOB) return BLOB; const r = await fetch(CFG.file, { cache: 'no-store' }); if (!r.ok) throw new Error('nofile'); return (BLOB = new Uint8Array(await r.arrayBuffer())); }
+async function getVault() { if (VAULT) return VAULT; const r = await fetch(CFG.vault + VQ, { cache: 'no-store' }); if (!r.ok) throw new Error('nofile'); return (VAULT = await r.json()); }
+async function getBlob() { if (BLOB) return BLOB; const r = await fetch(CFG.file + VQ, { cache: 'no-store' }); if (!r.ok) throw new Error('nofile'); return (BLOB = new Uint8Array(await r.arrayBuffer())); }
 async function deriveKek(pw, salt, iter) {
   const base = await crypto.subtle.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
@@ -188,7 +189,7 @@ function shell() {
   ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
   setInterval(() => { if (Date.now() - lastAct > IDLE_MIN * 60e3 || (SESSION_EXP && Date.now() > SESSION_EXP)) logout(); }, 30e3);
   // параллакс фото
-  let pr = 0; addEventListener('scroll', () => { if (pr || RM) return; pr = requestAnimationFrame(() => { pr = 0; const y = scrollY; $$('.par').forEach(el => { const r = el.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return; el.style.translate = `0 ${(r.top * -.1).toFixed(1)}px`; }); }); }, { passive: true });
+  let pr = 0; addEventListener('scroll', () => { if (pr || RM) return; pr = requestAnimationFrame(() => { pr = 0; const y = scrollY; $$('.par').forEach(el => { const r = el.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return; el.style.translate = `0 ${clamp(r.top * -.08 / Z, -24, 24).toFixed(1)}px`; }); }); }, { passive: true });
 }
 function markSeen(id) {
   const seen = new Set(store.get(seenKey(), [])); seen.add(id); store.set(seenKey(), [...seen]);
@@ -249,7 +250,7 @@ function wireFx(root) {
   CLEAN.push(() => io.disconnect());
   $$('.spot', root).forEach(el => {
     el.insertAdjacentHTML('afterbegin', '<span class="spot-l"></span>');
-    el.addEventListener('pointermove', e => { const r = el.getBoundingClientRect(); el.style.setProperty('--mx', (e.clientX - r.left) + 'px'); el.style.setProperty('--my', (e.clientY - r.top) + 'px'); });
+    el.addEventListener('pointermove', e => { const r = el.getBoundingClientRect(); el.style.setProperty('--mx', (e.clientX - r.left) / Z + 'px'); el.style.setProperty('--my', (e.clientY - r.top) / Z + 'px'); });
   });
 }
 function countUp(el) {
@@ -265,6 +266,7 @@ function numHTML(v) {
   if (/^[.,:\d–\-/]/.test(suf) || (!pre && n >= 1900 && n <= 2100) || /\d/.test(suf.slice(0, 3))) return esc(v);
   return `<span data-cu="${n}" data-d="${frac ? frac.length - 1 : 0}" data-pre="${esc(pre)}" data-suf="${esc(suf)}">${esc(v)}</span>`;
 }
+let Z = 1;
 function hover(box, svg, n, x0, x1, vbW, onMove) {
   const tip = $('.tip', box);
   const move = e => {
@@ -272,9 +274,9 @@ function hover(box, svg, n, x0, x1, vbW, onMove) {
     const i = clamp(Math.round((sx - x0) / ((x1 - x0) || 1) * (n - 1)), 0, n - 1);
     const html = onMove(i); if (html == null) return;
     tip.innerHTML = html; tip.classList.add('on');
-    const br = box.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    const br = box.getBoundingClientRect(), tr = tip.getBoundingClientRect(), tw = tr.width, th = tr.height;
     let lx = e.clientX - br.left + 16; if (lx + tw > br.width) lx = e.clientX - br.left - tw - 16;
-    tip.style.transform = `translate(${Math.max(0, lx)}px,${clamp(e.clientY - br.top - th / 2, -10, br.height - th)}px)`;
+    tip.style.transform = `translate(${Math.max(0, lx) / Z}px,${clamp(e.clientY - br.top - th / 2, -10, br.height - th) / Z}px)`;
   };
   svg.addEventListener('pointermove', move); svg.addEventListener('pointerleave', () => tip.classList.remove('on'));
 }
@@ -313,7 +315,7 @@ const SIMG = { 22: 'Мелководный ледовый Каспий', 29: 'Л
 function figHTML(n) {
   const cap = SIMG[n], own = 's' + pad3(n) + '.webp';
   if (!cap || !HAS.has(own)) return '';
-  return `<figure class="sfig"><img src="${own}" alt="" loading="lazy"><figcaption>${esc(cap)} · иллюстрация</figcaption></figure>`;
+  return `<figure class="sfig"><img src="${own}${VQ}" alt="" loading="lazy"><figcaption>${esc(cap)} · иллюстрация</figcaption></figure>`;
 }
 const WIDE = new Set(['table', 'flow', 'compare', 'quote']);
 const natWide = s => !!(s.w || s.n === 44 || WIDE.has(s.type) || (s.type === 'timeline' && s.items.length > 3) || JSON.stringify(s).length > 1100);
@@ -504,11 +506,11 @@ MOUNT.production = el => {
 
 /* ---- схема объектов ---- */
 const SCH = [
-  { k: 'OFFSHORE', t: 'Пласт / скважины', n: 30, c: '#0a2547' },
-  { k: 'ICE-RESISTANT', t: 'Платформы 1–2', n: 29, c: '#0a64a4' },
+  { k: 'OFFSHORE', t: 'Пласт /|скважины', n: 30, c: '#0a2547' },
+  { k: 'ICE-RESISTANT', t: 'Платформы|1–2', n: 29, c: '#0a64a4' },
   { k: 'SUBSEA', t: 'Трубопроводы', n: 32, c: '#19a2df' },
   { k: 'ONSHORE', t: 'CPF', n: 34, c: '#0f957a' },
-  { k: 'EXPORT', t: 'Сбыт / газ', n: 36, c: '#e0284a' },
+  { k: 'EXPORT', t: 'Сбыт /|газ', n: 36, c: '#e0284a' },
 ];
 W.scheme = s => {
   const xs = SCH.map((_, i) => 20 + i * 196);
@@ -517,9 +519,9 @@ W.scheme = s => {
     ${SCH.map((n, i) => i < 4 ? `<use href="#lk${i}" stroke="${n.c}" stroke-opacity=".35" stroke-width="3"/>${[0, 1, 2].map(k => `<circle r="3.5" class="particle" fill="${SCH[i + 1].c}"><animateMotion dur="1.6s" begin="${k * .53}s" repeatCount="indefinite"><mpath href="#lk${i}"/></animateMotion></circle>`).join('')}` : '').join('')}
     ${SCH.map((n, i) => `<g class="sn" data-i="${i}" tabindex="0"><rect class="card" x="${xs[i]}" y="40" width="156" height="104" rx="16" fill="#fff" fill-opacity=".85" stroke="${n.c}" stroke-opacity=".5"/>
       <rect x="${xs[i]}" y="40" width="156" height="5" rx="2.5" fill="${n.c}"/>
-      <text x="${xs[i] + 14}" y="70" style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;fill:${n.c}">${n.k}</text>
-      <text x="${xs[i] + 14}" y="98" style="font:600 15px Unbounded,Onest,sans-serif;fill:#0a2547">${n.t}</text>
-      <text x="${xs[i] + 14}" y="126" style="font:500 10.5px 'IBM Plex Mono',monospace;fill:#7689a3">подробнее · СЛ ${pad3(n.n)}</text>
+      <text x="${xs[i] + 14}" y="66" style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;fill:${n.c}">${n.k}</text>
+      <text x="${xs[i] + 14}" y="${n.t.includes('|') ? 89 : 98}" style="font:700 14.5px Montserrat,Onest,sans-serif;fill:#0a2547;letter-spacing:-.01em">${n.t.split('|').map((w, j) => `<tspan x="${xs[i] + 14}" dy="${j ? 17 : 0}">${w}</tspan>`).join('')}</text>
+      <text x="${xs[i] + 14}" y="132" style="font:500 10.5px 'IBM Plex Mono',monospace;fill:#7689a3">подробнее · СЛ ${pad3(n.n)}</text>
       <line x1="${xs[i] + 78}" y1="144" x2="${xs[i] + 78}" y2="228" stroke="#7689a3" stroke-dasharray="2 4"/><circle cx="${xs[i] + 78}" cy="228" r="4" fill="#fff" stroke="#0a64a4" stroke-width="2"/></g>`).join('')}
     <use href="#bus" stroke="#0a64a4" stroke-width="2" stroke-dasharray="8 6" style="animation:dashmove 1.2s linear infinite"/>
     <rect x="250" y="240" width="480" height="26" rx="8" fill="#fff" fill-opacity=".9"/>
@@ -528,7 +530,7 @@ W.scheme = s => {
 };
 MOUNT.scheme = el => {
   const show = i => { const n = SCH[i], sl = S(n.n); $$('.sn', el).forEach(g => g.classList.toggle('on', +g.dataset.i === i));
-    $('#snD', el).innerHTML = `<div class="sn-detail"><h4><span>${esc(n.t)} · ${esc(sl.t)}</span><button class="lnk" data-go="${n.n}">к слайду ${pad3(n.n)} →</button></h4><ul>${(sl.items || []).slice(0, 3).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`; };
+    $('#snD', el).innerHTML = `<div class="sn-detail"><h4><span>${esc(n.t.replace('|', ' '))} · ${esc(sl.t)}</span><button class="lnk" data-go="${n.n}">к слайду ${pad3(n.n)} →</button></h4><ul>${(sl.items || []).slice(0, 3).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`; };
   $$('.sn', el).forEach(g => { g.addEventListener('click', () => show(+g.dataset.i)); g.addEventListener('keydown', e => { if (e.key === 'Enter') show(+g.dataset.i); }); });
   el.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) location.hash = `${MOD_OF[+b.dataset.go]}/s${b.dataset.go}`; });
   show(1);
@@ -651,7 +653,7 @@ MOUNT.capex = (el, s) => {
     <rect x="198" y="${Y(7.9) - 14}" width="92" height="22" rx="6" fill="#fff"/><text x="244" y="${Y(7.9) + 1}" text-anchor="middle" style="font:500 11px 'IBM Plex Mono',monospace;fill:#e0284a">+≈$2 млрд</text>
     <text x="${l}" y="10" class="ax">$ млрд</text></svg>`);
   const tip = $('.tip', el);
-  $$('.cxb', el).forEach(g => { g.style.cursor = 'pointer'; g.addEventListener('pointerenter', e => { const i = +g.dataset.i, it = s.items[i]; tip.innerHTML = `<div class="t-h">${esc(it[0])}</div>${esc(it[1])}`; tip.classList.add('on'); const br = $('#cxC', el).getBoundingClientRect(), gr = g.getBoundingClientRect(); tip.style.transform = `translate(${clamp(gr.left - br.left, 0, br.width - 260)}px,${gr.top - br.top - 10}px)`; }); g.addEventListener('pointerleave', () => tip.classList.remove('on')); });
+  $$('.cxb', el).forEach(g => { g.style.cursor = 'pointer'; g.addEventListener('pointerenter', e => { const i = +g.dataset.i, it = s.items[i]; tip.innerHTML = `<div class="t-h">${esc(it[0])}</div>${esc(it[1])}`; tip.classList.add('on'); const br = $('#cxC', el).getBoundingClientRect(), gr = g.getBoundingClientRect(); tip.style.transform = `translate(${clamp(gr.left - br.left, 0, br.width - 260 * Z) / Z}px,${(gr.top - br.top - 10) / Z}px)`; }); g.addEventListener('pointerleave', () => tip.classList.remove('on')); });
 };
 
 /* ---- донат задолженности ---- */
@@ -713,7 +715,7 @@ MOUNT.price = el => {
     return `<text x="${l - 12}" y="${y + 13}" text-anchor="end" style="font:600 12.5px Onest,sans-serif;fill:#0a2547">${v.t}</text><text x="${l - 12}" y="${y + 27}" text-anchor="end" class="ax">${v.d}</text>${segs}<text x="${x + 8}" y="${y + 20}" style="font:600 14px Unbounded,Onest,sans-serif;fill:#0a2547">~$${fmt(tot, 0)}</text>`; }).join('');
   $('#prC', el).insertAdjacentHTML('beforeend', `<svg viewBox="0 0 ${Wd} ${H}" id="prS"><defs><pattern id="hx" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#e0284a" opacity=".25"/><line x1="0" y1="0" x2="0" y2="7" stroke="#e0284a" stroke-width="3"/></pattern><pattern id="hk" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#c08300" stroke-opacity=".35" stroke-width="2"/></pattern></defs>${band}${g}${rows}<text x="${Wd - r}" y="${H - 8}" class="ax">$ млн</text></svg>`);
   const tip = $('.tip', el), box = $('#prC', el);
-  $$('.prs', el).forEach(rc => { rc.style.cursor = 'pointer'; rc.addEventListener('pointermove', e => { const v = V[+rc.dataset.i]; tip.innerHTML = `<div class="t-h">${v.d} · ${v.t}</div>${v.p.map(([val, n, c]) => `<div class="t-r"><span><i style="--c:${c.startsWith('url') ? '#e0284a' : c}"></i>${n}</span><b>$${fmt(val, 1)} млн</b></div>`).join('')}`; tip.classList.add('on'); const br = box.getBoundingClientRect(); tip.style.transform = `translate(${clamp(e.clientX - br.left + 14, 0, br.width - 260)}px,${e.clientY - br.top + 14}px)`; }); rc.addEventListener('pointerleave', () => tip.classList.remove('on')); });
+  $$('.prs', el).forEach(rc => { rc.style.cursor = 'pointer'; rc.addEventListener('pointermove', e => { const v = V[+rc.dataset.i]; tip.innerHTML = `<div class="t-h">${v.d} · ${v.t}</div>${v.p.map(([val, n, c]) => `<div class="t-r"><span><i style="--c:${c.startsWith('url') ? '#e0284a' : c}"></i>${n}</span><b>$${fmt(val, 1)} млн</b></div>`).join('')}`; tip.classList.add('on'); const br = box.getBoundingClientRect(); tip.style.transform = `translate(${clamp(e.clientX - br.left + 14, 0, br.width - 260 * Z) / Z}px,${(e.clientY - br.top + 14) / Z}px)`; }); rc.addEventListener('pointerleave', () => tip.classList.remove('on')); });
 };
 
 /* ---- предложение CNOOC: водопад ---- */
@@ -891,5 +893,30 @@ function bgFx() {
   };
   requestAnimationFrame(frame);
 }
-function startApp() { bgFx(); shell(); route(); try { xpInit(); } catch (e) { console.error(e); } }
+
+/* ---- масштаб интерфейса: авто под большой экран + ручная подстройка ---- */
+const ZK = 'khz-zoom';
+function zoomAuto() { const w = innerWidth; return w < 1700 ? 1 : clamp(w / 1520, 1, 2.2); }
+function zoomMax() { return innerWidth < 1000 ? 1 : clamp(innerWidth / 1180, 1, 2.6); }
+function applyZoom() {
+  let man = null; try { man = JSON.parse(localStorage.getItem(ZK)); } catch (e) {}
+  const auto = man == null; let z = auto ? zoomAuto() : man;
+  z = innerWidth < 1000 ? 1 : clamp(z, .7, zoomMax());
+  Z = +z.toFixed(2); document.documentElement.style.setProperty('--z', Z);
+  const v = $('#zmV'); if (v) { v.textContent = Math.round(Z * 100) + '%'; v.classList.toggle('auto', auto); }
+  dispatchEvent(new Event('khz-zoom'));
+}
+function zoomStep(d) { const steps = [.7, .8, .9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2, 2.2, 2.4];
+  let i = steps.findIndex(x => x >= Z - .001); if (i < 0) i = steps.length - 1;
+  if (d > 0 && steps[i] <= Z + .001) i++; if (d < 0) i--;
+  const z = clamp(steps[clamp(i, 0, steps.length - 1)], .7, zoomMax());
+  try { localStorage.setItem(ZK, JSON.stringify(z)); } catch (e) {} applyZoom(); }
+function zoomInit() {
+  applyZoom(); addEventListener('resize', applyZoom);
+  $('#zmM')?.addEventListener('click', () => zoomStep(-1)); $('#zmP')?.addEventListener('click', () => zoomStep(1));
+  $('#zmV')?.addEventListener('click', () => { try { localStorage.removeItem(ZK); } catch (e) {} applyZoom(); });
+  addEventListener('keydown', e => { if (!e.altKey || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomStep(1); } else if (e.key === '-') { e.preventDefault(); zoomStep(-1); } else if (e.key === '0') { e.preventDefault(); $('#zmV').click(); } });
+}
+function startApp() { zoomInit(); bgFx(); shell(); route(); try { xpInit(); } catch (e) { console.error(e); } }
 gate();
